@@ -48,6 +48,11 @@ func main() {
 }
 
 func refresh() {
+
+	if buf != nil {
+		buf.Unref()
+	}
+
 	buf, _ = gdkpixbuf.NewPixbufFromFile(os.Args[1])
 
 	// Getting the scale
