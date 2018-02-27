@@ -11,6 +11,7 @@ import (
 	"github.com/disintegration/imaging"
 	"github.com/gorilla/mux"
 	"github.com/mattn/go-gtk/gdkpixbuf"
+	"github.com/mattn/go-gtk/glib"
 	"github.com/mattn/go-gtk/gtk"
 	"net/http"
 	"os"
@@ -45,8 +46,6 @@ func main() {
 
 func refresh() {
 
-	_buf := buf
-
 	file, _ := imaging.Open(os.Args[1])
 
 	scaled := imaging.Fit(file, window.GetAllocation().Width, window.GetAllocation().Height, imaging.Box)
@@ -55,15 +54,11 @@ func refresh() {
 
 	buffer := bytes.NewBuffer(bts)
 
-	imaging.Encode(buffer, scaled, imaging.PNG)
+	imaging.Encode(buffer, scaled, imaging.JPEG)
 
 	buf, _ := gdkpixbuf.NewPixbufFromBytes(buffer.Bytes())
 
 	image.SetFromPixbuf(buf)
-
-	if _buf != nil {
-		_buf.Unref()
-	}
 }
 
 func server() {
@@ -76,5 +71,5 @@ func server() {
 }
 
 func refreshReq(w http.ResponseWriter, r *http.Request) {
-	refresh()
+	glib.IdleAdd(refresh)
 }
