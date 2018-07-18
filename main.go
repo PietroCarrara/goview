@@ -54,7 +54,7 @@ func refresh() {
 
 	buffer := bytes.NewBuffer(bts)
 
-	imaging.Encode(buffer, scaled, imaging.JPEG)
+	imaging.Encode(buffer, scaled, imaging.PNG)
 
 	buf, _ := gdkpixbuf.NewPixbufFromBytes(buffer.Bytes())
 
