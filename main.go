@@ -21,6 +21,8 @@ var window *gtk.Window
 var buf *gdkpixbuf.Pixbuf
 var image *gtk.Image
 
+var path string
+
 func main() {
 	gtk.Init(nil)
 	window = gtk.NewWindow(gtk.WINDOW_TOPLEVEL)
@@ -31,7 +33,9 @@ func main() {
 
 	image = gtk.NewImage()
 
-	refresh()
+	if len(os.Args) > 1 {
+		setImage(os.Args[1])
+	}
 
 	window.Connect("configure-event", refresh)
 
@@ -45,8 +49,22 @@ func main() {
 }
 
 func refresh() {
+	setImage(path)
+}
 
-	file, _ := imaging.Open(os.Args[1])
+func setImage(img string) {
+
+	if img == "" {
+		return
+	}
+
+	path = img
+
+	if buf != nil {
+		buf.Unref()
+	}
+
+	file, _ := imaging.Open(img)
 
 	scaled := imaging.Fit(file, window.GetAllocation().Width, window.GetAllocation().Height, imaging.Box)
 
@@ -56,7 +74,7 @@ func refresh() {
 
 	imaging.Encode(buffer, scaled, imaging.PNG)
 
-	buf, _ := gdkpixbuf.NewPixbufFromBytes(buffer.Bytes())
+	buf, _ = gdkpixbuf.NewPixbufFromBytes(buffer.Bytes())
 
 	image.SetFromPixbuf(buf)
 }
@@ -66,10 +84,17 @@ func server() {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/refresh", refreshReq)
+	r.HandleFunc("/setImage", setImageReq)
 
 	http.ListenAndServe(":6969", r)
 }
 
 func refreshReq(w http.ResponseWriter, r *http.Request) {
 	glib.IdleAdd(refresh)
+}
+
+func setImageReq(w http.ResponseWriter, r *http.Request) {
+	img := r.PostFormValue("image")
+
+	glib.IdleAdd(func() { setImage(img) })
 }
